@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <!-- All logistics fee products are service + manual delivery so we can push delivered qty from pickings. -->
+
+    <!-- ================= Handling ================= -->
+    <record id="prod_handling_cartons_in" model="product.product">
+        <field name="name">Cartons In</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.50</field>
+    </record>
+    <record id="prod_handling_cartons_out" model="product.product">
+        <field name="name">Cartons Out</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.50</field>
+    </record>
+    <record id="prod_handling_pallets_in" model="product.product">
+        <field name="name">Pallets In</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">2.50</field>
+    </record>
+    <record id="prod_handling_pallets_out" model="product.product">
+        <field name="name">Pallets Out</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">2.50</field>
+    </record>
+    <record id="prod_handling_container_20" model="product.product">
+        <field name="name">Offload / Load 20ft Container</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">300.00</field>
+    </record>
+    <record id="prod_handling_container_40" model="product.product">
+        <field name="name">Offload / Load 40ft Container</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">400.00</field>
+    </record>
+    <record id="prod_handling_other" model="product.product">
+        <field name="name">Handling - Other</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.00</field>
+    </record>
+    <record id="prod_transport_delivery_leg" model="product.product">
+        <field name="name">Transport Charges</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.00</field>
+    </record>
+
+    <!-- ================= Storage ================= -->
+    <record id="prod_storage_carton_week" model="product.product">
+        <field name="name">Carton Storage (per week or part of)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1.00</field>
+    </record>
+    <record id="prod_storage_pallet_week" model="product.product">
+        <field name="name">Pallet Storage (per week or part of)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">5.00</field>
+    </record>
+    <record id="prod_storage_container_month" model="product.product">
+        <field name="name">Container Storage (per calendar month)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">200.00</field>
+    </record>
+    <record id="prod_storage_unit_month" model="product.product">
+        <field name="name">Unit Storage (per calendar month)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">500.00</field>
+    </record>
+    <record id="prod_storage_yard_month" model="product.product">
+        <field name="name">Yard Space (per calendar month)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1000.00</field>
+    </record>
+    <record id="prod_storage_other" model="product.product">
+        <field name="name">Storage - Other</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.00</field>
+    </record>
+
+    <!-- ================= Order Fulfilment (Goods In) ================= -->
+    <record id="prod_gi_order_receipt" model="product.product">
+        <field name="name">Order Receipt (Goods In)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1.00</field>
+    </record>
+    <record id="prod_gi_movements_sku" model="product.product">
+        <field name="name">Movements In (per SKU)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.75</field>
+    </record>
+    <record id="prod_gi_movements_qty" model="product.product">
+        <field name="name">Movements In (per Qty)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.75</field>
+    </record>
+    <record id="prod_gi_serial" model="product.product">
+        <field name="name">Serial Number Capture (if applicable)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.25</field>
+    </record>
+    <record id="prod_gi_lot" model="product.product">
+        <field name="name">Lot Number Capture (if applicable)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.25</field>
+    </record>
+    <record id="prod_gi_expiry" model="product.product">
+        <field name="name">Expiry Date Capture (if applicable)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">0.25</field>
+    </record>
+
+    <!-- ================= Order Fulfilment (Goods Out) – Option 1 ================= -->
+    <record id="prod_go_order_receipt" model="product.product">
+        <field name="name">Order Receipt (Goods Out)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1.00</field>
+    </record>
+    <record id="prod_go_sku_picked" model="product.product">
+        <field name="name">SKU Picked (Goods Out)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1.50</field>
+    </record>
+    <record id="prod_go_qty_picked" model="product.product">
+        <field name="name">Qty Picked (Goods Out)</field>
+        <field name="type">service</field>
+        <field name="service_type">manual</field>
+        <field name="list_price">1.50</field>
+    </record>
+</odoo>

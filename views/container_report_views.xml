@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_container_report_wizard_form" model="ir.ui.view">
+        <field name="name">stock.container.report.wizard.form</field>
+        <field name="model">stock.container.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Containers Ledger">
+                <header>
+                    <button name="action_generate_report"
+                            string="Generate"
+                            type="object"
+                            class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="from_date"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="to_date"/>
+                            <field name="container_type_id"/>
+                            <field name="location_id"/>
+                        </group>
+                    </group>
+                    <group string="Results">
+                        <field name="result_line_ids" nolabel="1">
+                            <list create="0" delete="0" edit="0">
+                                <field name="partner_id"/>
+                                <field name="container_type_id"/>
+                                <field name="location_id"/>
+                                <field name="opening"/>
+                                <field name="inward"/>
+                                <field name="outward"/>
+                                <field name="balance"/>
+                                <button name="action_view_inward_moves" string="Inward Moves" type="object" class="btn-link"/>
+                                <button name="action_view_outward_moves" string="Outward Moves" type="object" class="btn-link"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stock_container_report_wizard" model="ir.actions.act_window">
+        <field name="name">Containers Ledger</field>
+        <field name="res_model">stock.container.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+</odoo>

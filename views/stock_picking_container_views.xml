@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_picking_container_list" model="ir.ui.view">
+        <field name="name">stock.picking.container.list</field>
+        <field name="model">stock.picking.container</field>
+        <field name="arch" type="xml">
+            <list string="Container Movements" create="0">
+                <field name="movement_date"/>
+                <field name="picking_id"/>
+                <field name="picking_type_code"/>
+                <field name="warehouse_id"/>
+                <field name="partner_id"/>
+                <field name="location_id"/>
+                <field name="location_dest_id"/>
+                <field name="container_type_id"/>
+                <field name="container_count" sum="Total Containers"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_stock_picking_container_form" model="ir.ui.view">
+        <field name="name">stock.picking.container.form</field>
+        <field name="model">stock.picking.container</field>
+        <field name="arch" type="xml">
+            <form string="Container Movement">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="picking_id"/>
+                            <field name="movement_date"/>
+                            <field name="partner_id"/>
+                            <field name="container_type_id"/>
+                            <field name="container_count"/>
+                        </group>
+                        <group>
+                            <field name="warehouse_id"/>
+                            <field name="picking_type_id"/>
+                            <field name="location_id"/>
+                            <field name="location_dest_id"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_stock_picking_container_search" model="ir.ui.view">
+        <field name="name">stock.picking.container.search</field>
+        <field name="model">stock.picking.container</field>
+        <field name="arch" type="xml">
+            <search string="Container Movements">
+                <field name="picking_id"/>
+                <field name="partner_id"/>
+                <field name="warehouse_id"/>
+                <field name="container_type_id"/>
+                <field name="movement_date"/>
+                <filter name="filter_done" string="Done" domain="[('state', '=', 'done')]"/>
+                <filter name="filter_incoming" string="Receipts" domain="[('picking_type_code', '=', 'incoming')]"/>
+                <filter name="filter_outgoing" string="Deliveries" domain="[('picking_type_code', '=', 'outgoing')]"/>
+                <filter name="filter_internal" string="Internal" domain="[('picking_type_code', '=', 'internal')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_container_type" string="Container Type" context="{'group_by': 'container_type_id'}"/>
+                    <filter name="group_partner" string="Partner" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_warehouse" string="Warehouse" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_week" string="Week" context="{'group_by': 'movement_date:week'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'movement_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_stock_picking_container_pivot" model="ir.ui.view">
+        <field name="name">stock.picking.container.pivot</field>
+        <field name="model">stock.picking.container</field>
+        <field name="arch" type="xml">
+            <pivot string="Container Movements">
+                <field name="container_type_id" type="row"/>
+                <field name="warehouse_id" type="row"/>
+                <field name="movement_date" interval="week" type="col"/>
+                <field name="container_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_stock_picking_container_graph" model="ir.ui.view">
+        <field name="name">stock.picking.container.graph</field>
+        <field name="model">stock.picking.container</field>
+        <field name="arch" type="xml">
+            <graph string="Container Movements" type="bar">
+                <field name="movement_date" interval="week"/>
+                <field name="container_type_id"/>
+                <field name="container_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_stock_picking_container_report" model="ir.actions.act_window">
+        <field name="name">Container Movements</field>
+        <field name="res_model">stock.picking.container</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_stock_picking_container_search"/>
+        <field name="context">{'search_default_filter_done': 1, 'search_default_group_week': 1}</field>
+        <field name="domain">[('state', '=', 'done')]</field>
+    </record>
+</odoo>

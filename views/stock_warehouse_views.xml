@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+       <!-- Inherit Form View to Modify it -->
+       <record id="stock_warehouse_owner_form_inherit" model="ir.ui.view">
+           <field name="name">stock.warehouse.owner.form.inherit</field>
+           <field name="model">stock.warehouse</field>
+           <field name="inherit_id" ref="stock.view_warehouse"/>
+           <field name="arch" type="xml">
+
+               <xpath expr="//field[@name='code']" position="after">
+                   <field name="commercial_partner_id" domain="[('is_company', '=', True)]"/>
+                   <field name="rental_location_id"/>
+                   <field name="enable_auto_rental_refill"/>
+               </xpath>
+
+           </field>
+       </record>
+
+    </data>
+</odoo>

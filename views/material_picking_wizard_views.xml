@@ -1,0 +1,33 @@
+<!-- stock_materials_consumption/views/material_picking_wizard_views.xml -->
+<odoo>
+    <record id="view_material_picking_wizard_form" model="ir.ui.view">
+        <field name="name">material.picking.wizard.form</field>
+        <field name="model">material.picking.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add Materials">
+                <group>
+                    <field name="sale_id" readonly="1"/>
+                    <field name="picking_id" readonly="1"/>
+                </group>
+                <group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="product_id" readonly="1"/>
+                            <field name="uom_id" readonly="1"/>
+                            <field name="qty"/>
+                        </list>
+                    </field>
+                </group>
+                <footer>
+                    <button string="Confirm"
+                            type="object"
+                            name="action_confirm"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

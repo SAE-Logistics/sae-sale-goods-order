@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_sale_order_all_confirmed" model="ir.actions.act_window">
+        <field name="name">All Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,kanban,calendar,pivot,graph,activity</field>
+        <field name="search_view_id" ref="sale_order_search_inherit_order_type_filters"/>
+        <field name="context">{"ord_type":"all"}</field>
+        <field name="domain">[("state","in",["sale","done"])]</field>
+    </record>
+    <record id="action_sale_order_all_confirmed_list_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="sale_order_all_confirmed_list_view"/>
+        <field name="act_window_id" ref="action_sale_order_all_confirmed"/>
+    </record>
+    <menuitem id="menu_sale_order_all_confirmed" name="All Orders" parent="sale.menu_sale_order" sequence="24"
+              action="action_sale_order_all_confirmed"/>
+
+    <record id="action_sale_order_goods" model="ir.actions.act_window">
+        <field name="name">Goods Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,kanban,calendar,pivot,graph,activity</field>
+        <field name="context">{"ord_type":"goods"}</field>
+        <field name="domain">[("order_type","in",["goods_in", "goods_out"])]</field>
+    </record>
+    <menuitem id="menu_sale_order_goods" name="Goods Orders" parent="sale.menu_sale_order" sequence="25"
+              action="action_sale_order_goods"/>
+
+    <record id="action_sale_transport_legs" model="ir.actions.act_window">
+        <field name="name">Transport Legs</field>
+        <field name="res_model">sale.transport.leg</field>
+        <field name="view_mode">list,form,kanban,pivot,graph,activity</field>
+    </record>
+
+
+
+    <record id="action_sale_order_transport" model="ir.actions.act_window">
+        <field name="name">Transport Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,kanban,calendar,pivot,graph,activity</field>
+        <field name="context">{"ord_type":"transport"}</field>
+        <field name="domain">[("order_type","=","transport")]</field>
+    </record>
+    <menuitem id="menu_sale_order_transport" name="Transport Orders" parent="sale.menu_sale_order" sequence="26"
+              action="action_sale_order_transport"/>
+    <menuitem id="menu_sale_bulk_invoice_orders" name="Bulk Invoice Orders" parent="sale.menu_sale_order" sequence="27"
+              action="action_sale_bulk_invoice_wizard"/>
+    <menuitem id="menu_sale_transport_legs" name="Transport Legs" parent="sale.menu_sale_order" sequence="30"
+              action="action_sale_transport_legs"/>
+    <menuitem id="menu_stock_container_balance_report" name="Containers Ledger"
+              parent="stock.menu_warehouse_report" sequence="50"
+              action="action_stock_container_report_wizard"/>
+</odoo>

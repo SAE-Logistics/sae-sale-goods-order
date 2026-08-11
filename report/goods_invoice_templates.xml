@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_goods_invoice_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="company" t-value="o.company_id.sudo()"/>
+                <t t-set="report_data" t-value="o._get_goods_invoice_report_data()"/>
+                <t t-set="goods_section" t-value="report_data.get('goods_section')"/>
+                <t t-set="storage_section" t-value="report_data.get('storage_section')"/>
+                <t t-set="rental_section" t-value="report_data.get('rental_section')"/>
+                <t t-set="sale_orders" t-value="o._get_goods_sale_orders()"/>
+                <t t-set="first_order" t-value="sale_orders[:1]"/>
+                <t t-set="group_name" t-value="first_order.partner_id.display_name if first_order else o.partner_id.display_name"/>
+                <t t-set="region" t-value="o._get_goods_report_region()"/>
+
+                <t t-call="web.basic_layout">
+                    <div class="page goods-invoice-page">
+                        <style>
+                            .goods-invoice-page {
+                                font-family: Arial, sans-serif;
+                                color: #3f465b;
+                                font-size: 10px;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .goods-header {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 8px;
+                            }
+                            .goods-header td {
+                                vertical-align: bottom;
+                                padding: 0;
+                            }
+                            .goods-logo {
+                                max-height: 54px;
+                                max-width: 180px;
+                            }
+                            .goods-title {
+                                font-size: 18px;
+                                font-weight: 700;
+                                text-align: center;
+                                color: #2f3444;
+                            }
+                            .goods-meta-right {
+                                text-align: right;
+                                font-size: 10px;
+                                line-height: 1.25;
+                                white-space: nowrap;
+                            }
+                            .goods-summary {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 6px;
+                            }
+                            .goods-summary td {
+                                padding: 2px 4px;
+                                vertical-align: top;
+                            }
+                            .goods-summary .label {
+                                background: #f1f1f1;
+                                color: #555;
+                                font-size: 9px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                white-space: nowrap;
+                            }
+                            .goods-summary .value {
+                                font-size: 11px;
+                                font-weight: 700;
+                            }
+                            .goods-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                table-layout: fixed;
+                                font-size: 9px;
+                            }
+                            .goods-table thead th {
+                                background: #efefef;
+                                border: 1px solid #d9d9d9;
+                                padding: 4px 3px;
+                                text-align: left;
+                                font-weight: 700;
+                                color: #3a3a3a;
+                            }
+                            .goods-table tbody td {
+                                border: 1px solid #d9d9d9;
+                                padding: 3px 3px;
+                                vertical-align: top;
+                            }
+                            .goods-table .nowrap {
+                                white-space: nowrap;
+                            }
+                            .goods-table .text-right {
+                                text-align: right;
+                                white-space: nowrap;
+                            }
+                            .goods-section-title {
+                                margin: 10px 0 4px;
+                                font-size: 11px;
+                                font-weight: 700;
+                                color: #2f3444;
+                            }
+                            .goods-subtotal-row td,
+                            .goods-total-row td {
+                                font-weight: 700;
+                                background: #f6f6f6;
+                            }
+                            .goods-page-footer {
+                                margin-top: 6px;
+                                text-align: right;
+                                font-size: 9px;
+                                color: #666;
+                            }
+                        </style>
+
+                        <table class="goods-header">
+                            <tr>
+                                <td style="width: 20%;">
+                                    <img
+                                        t-if="company.logo"
+                                        t-att-src="image_data_uri(company.logo)"
+                                        class="goods-logo"
+                                        alt="Company Logo"
+                                    />
+                                </td>
+                                <td style="width: 60%;" class="goods-title">
+                                    Invoiced - Ancillary Charges : <span t-esc="group_name"/>
+                                </td>
+                                <td style="width: 20%;" class="goods-meta-right">
+                                    <div><span t-esc="o.invoice_date or ''"/></div>
+                                    <div>Page <span class="page"/> of <span class="topage"/></div>
+                                    <div t-if="o.name"><span t-esc="o.name"/></div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table class="goods-summary">
+                            <tr>
+                                <td class="label" style="width: 14%;">Group / Department</td>
+                                <td class="value" style="width: 28%;"><span t-esc="group_name"/></td>
+                                <td class="label" style="width: 8%;">Title</td>
+                                <td class="value" style="width: 16%;">Stock</td>
+                                <td class="label" style="width: 8%;">Region</td>
+                                <td class="value" style="width: 12%;"><span t-esc="region"/></td>
+                                <td class="label" style="width: 6%;">Period</td>
+                                <td class="value" style="width: 8%;">
+                                    <span t-esc="report_data.get('period_start') or ''"/>
+                                    <span t-if="report_data.get('period_start') and report_data.get('period_end')"> to </span>
+                                    <span t-esc="report_data.get('period_end') or ''"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="goods-section-title">Goods In / Goods Out</div>
+                        <table class="goods-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 14%;">Job ID</th>
+                                    <th style="width: 12%;">Date</th>
+                                    <th style="width: 12%;">Type</th>
+                                    <th style="width: 14%;" class="text-right">Order Handling</th>
+                                    <th style="width: 14%;" class="text-right">Containers</th>
+                                    <th style="width: 14%;" class="text-right">Lot / Expiry</th>
+                                    <th style="width: 14%;" class="text-right">Materials</th>
+                                    <th style="width: 14%;" class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="goods_section.get('rows')" t-as="row">
+                                    <td><span t-esc="row.get('job_id')"/></td>
+                                    <td class="nowrap"><span t-esc="row.get('date') or ''"/></td>
+                                    <td><span t-esc="row.get('type')"/></td>
+                                    <td class="text-right"><span t-out="row.get('order_handling', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-right"><span t-out="row.get('containers', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-right"><span t-out="row.get('lot_expiry', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-right"><span t-out="row.get('materials', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-right"><span t-out="row.get('total', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                                <tr t-if="not goods_section.get('rows')">
+                                    <td colspan="8">No goods in/out lines linked to this invoice.</td>
+                                </tr>
+                                <tr t-if="goods_section.get('rows')" class="goods-subtotal-row">
+                                    <td colspan="7">Subtotal</td>
+                                    <td class="text-right"><span t-out="goods_section.get('subtotal', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div t-if="storage_section.get('rows')" class="goods-section-title">Storage Charges</div>
+                        <table t-if="storage_section.get('rows')" class="goods-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 16%;">Week</th>
+                                    <th style="width: 20%;">Container Type</th>
+                                    <th style="width: 12%;" class="text-right">Opening</th>
+                                    <th style="width: 12%;" class="text-right">In</th>
+                                    <th style="width: 12%;" class="text-right">Closing</th>
+                                    <th style="width: 12%;" class="text-right">Rate per Container</th>
+                                    <th style="width: 16%;" class="text-right">Total Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="storage_section.get('rows')" t-as="row">
+                                    <td t-if="row.get('show_week')" t-att-rowspan="row.get('week_rowspan')">
+                                        <span t-esc="row.get('week_label')"/>
+                                    </td>
+                                    <td><span t-esc="row.get('container_type')"/></td>
+                                    <td class="text-right"><span t-esc="row.get('opening', 0.0)"/></td>
+                                    <td class="text-right"><span t-esc="row.get('inward', 0.0)"/></td>
+                                    <td class="text-right"><span t-esc="row.get('closing', 0.0)"/></td>
+                                    <td class="text-right"><span t-out="row.get('rate', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-right"><span t-out="row.get('amount', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                                <tr class="goods-subtotal-row">
+                                    <td colspan="6">Subtotal</td>
+                                    <td class="text-right"><span t-out="storage_section.get('subtotal', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div t-if="rental_section.get('rows')" class="goods-section-title">Rental</div>
+                        <table t-if="rental_section.get('rows')" class="goods-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 70%;">Rental Space Name</th>
+                                    <th style="width: 30%;" class="text-right">Rent Per Month</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rental_section.get('rows')" t-as="row">
+                                    <td><span t-esc="row.get('rental_space_name')"/></td>
+                                    <td class="text-right"><span t-out="row.get('rent_per_month', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                                <tr class="goods-subtotal-row">
+                                    <td>Subtotal</td>
+                                    <td class="text-right"><span t-out="rental_section.get('subtotal', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="goods-section-title">Totals</div>
+                        <table class="goods-table">
+                            <tbody>
+                                <tr class="goods-total-row">
+                                    <td style="width: 80%;">Total Without Tax</td>
+                                    <td style="width: 20%;" class="text-right">
+                                        <span t-out="report_data.get('untaxed_total', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tax</td>
+                                    <td class="text-right">
+                                        <span t-out="report_data.get('tax_amount', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr class="goods-total-row">
+                                    <td>Total With Tax</td>
+                                    <td class="text-right">
+                                        <span t-out="report_data.get('total_with_tax', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Balance</td>
+                                    <td class="text-right">
+                                        <span t-out="report_data.get('balance', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="goods-page-footer">
+                            <span t-if="o.invoice_payment_term_id">
+                                Payment terms: <span t-esc="o.invoice_payment_term_id.name"/>
+                            </span>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

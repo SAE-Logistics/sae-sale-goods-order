@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="transport_product_line_form_view" model="ir.ui.view">
+            <field name="name">transport.product.line.form.view</field>
+            <field name="model">transport.product.line</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="sale_commercial_partner_id" invisible="1"/>
+                                <field name="product_id" domain="['|', ('goods_owner_customer_id', '=', sale_commercial_partner_id), ('goods_owner_customer_id', '=', False)]"/>
+                                <field name="type"/>
+                                <field name="hs_code_id"/>
+                                <field name="country_of_origin_id"/>
+                            </group>
+                            <group>
+                                <field name="qty"/>
+                                <field name="weight"/>
+                                <field name="price"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="image" widget="image" options="{'preview_image': 'image'}"/>
+                            <field name="description"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_product_line_tree_view" model="ir.ui.view">
+            <field name="name">transport.product.line.tree.view</field>
+            <field name="model">transport.product.line</field>
+            <field name="arch" type="xml">
+                <list editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="sale_commercial_partner_id" column_invisible="1"/>
+                    <field name="image" widget="image" class="oe_avatar"
+                           options="{'preview_image': 'image'}"/>
+                    <field name="product_id" domain="['|', ('goods_owner_customer_id', '=', sale_commercial_partner_id), ('goods_owner_customer_id', '=', False)]"/>
+                    <field name="type"/>
+                    <field name="description"/>
+                    <field name="hs_code_id"/>
+                    <field name="country_of_origin_id"/>
+                    <field name="qty"/>
+                    <field name="weight"/>
+                    <field name="price"/>
+                </list>
+            </field>
+        </record>
+
+    </data>
+</odoo>

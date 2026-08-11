@@ -1,0 +1,56 @@
+# --- Secrets / local config (NEVER commit) ---
+.mcp.json
+.env
+.env.*
+*.pem
+*.key
+odoo.conf
+*.conf.local
+
+# --- Claude Code local state ---
+.claude/settings.local.json
+.claude/**/*.local.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Odoo runtime artefacts ---
+*.log
+filestore/
+sessions/
+.odoorc
+*.sql
+*.dump
+*.zip
+
+# --- Generated / sample printouts (contain customer data) ---
+Printouts/
+*.pdf
+
+# --- OS / editor ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

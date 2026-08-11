@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_sale_gto" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.sale.gto</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <app name="sale_management" position="inside">
+                <block title="Goods Orders Billing Map" name="goods_orders_billing_map">
+                    <setting id="default_core_metrics" string="Core Metrics" company_dependent="1">
+
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Order Receipt Product" for="product_order_receipt_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_order_receipt_id" domain="[('type', '=', 'service')]"/>
+                            </div>
+                            <div class="row">
+                                <label string="SKU (Incoming)" for="product_sku_in_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_sku_in_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Qty (Incoming)" for="product_qty_in_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_qty_in_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="SKU (Outgoing)" for="product_sku_out_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_sku_out_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Qty (Outgoing)" for="product_qty_out_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_qty_out_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Serial Capture" for="product_serial_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_serial_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Lot Capture" for="product_lot_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_lot_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Expiry Capture" for="product_expiry_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_expiry_id"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="default_handling_products" company_dependent="1" string="Handling">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Offload/Load 20ft Container" for="product_container20_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_container20_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Offload/Load 40ft Container" for="product_container40_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_container40_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Handling – Other" for="product_handling_other_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_handling_other_id"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="default_storage_products" company_dependent="1" string="Storage (Manual/Periodic)">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Carton Storage (per week)" for="product_storage_carton_week_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_carton_week_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Pallet Storage (per week)" for="product_storage_pallet_week_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_pallet_week_id"/>
+                            </div>
+                            <div class="row">
+                                <label string="Container Storage (per month)" for="product_storage_container_month_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_container_month_id"/>
+                                </div>
+                            <div class="row">
+                                <label string="Unit Storage (per month)" for="product_storage_unit_month_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_unit_month_id"/>
+                                </div>
+                            <div class="row">
+                                <label string="Yard Space (per month)" for="product_storage_yard_month_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_yard_month_id"/>
+                                </div>
+                            <div class="row">
+                                <label string="Storage – Other" for="product_storage_other_id" class="col-lg-3 o_light_label"/>
+                                <field name="product_storage_other_id"/>
+                            </div>
+                        </div>
+                    </setting>
+
+                    <setting id="default_material_template" company_dependent="1" string="Materials Template">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Default Materials Template" for="sale_material_template_id" class="col-lg-3 o_light_label"/>
+                                <field name="sale_material_template_id"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="default_container_type" company_dependent="1" string="Default Container Type">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Default Container Type" for="container_default_type_id" class="col-lg-3 o_light_label"/>
+                                <field name="container_default_type_id"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="transport_address" company_dependent="1" string="Transport Address">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Transport Address" for="transport_address_id" class="col-lg-3 o_light_label"/>
+                                <field name="transport_address_id"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="carrier_rate_api" string="Carrier Rate API">
+                        <div class="content-group">
+                            <div class="row">
+                                <label string="Carrier Rate API URL" for="carrier_rate_api_url" class="col-lg-3 o_light_label"/>
+                                <field name="carrier_rate_api_url"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </app>
+        </field>
+    </record>
+</odoo>

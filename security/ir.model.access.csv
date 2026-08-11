@@ -1,0 +1,18 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_material_template,sale_material_template,model_sale_material_template,base.group_user,1,1,1,1
+access_sale_material_template_line,sale_material_template_line,model_sale_material_template_line,base.group_user,1,1,1,1
+access_material_picking_wizard,material_picking_wizard,model_material_picking_wizard,base.group_user,1,1,1,1
+access_material_picking_wizard_line,material_picking_wizard_line,model_material_picking_wizard_line,base.group_user,1,1,1,1
+access_sale_bulk_invoice_wizard,sale.bulk.invoice.wizard,model_sale_bulk_invoice_wizard,base.group_user,1,1,1,1
+access_stock_picking_consumption_line,stock_picking_consumption_line,model_stock_picking_consumption_line,base.group_user,1,1,1,1
+access_transport_product_line_user,transport.product.line user,model_transport_product_line,base.group_user,1,1,1,1
+access_sale_transport_leg_user,sale.transport.leg.user,model_sale_transport_leg,base.group_user,1,1,1,1
+access_sale_transport_service_user,sale.transport.service.user,model_sale_transport_service,base.group_user,1,1,1,1
+access_sale_transport_carrier_user,sale.transport.carrier.user,model_sale_transport_carrier,base.group_user,1,1,1,1
+access_sale_carrier_service_option_user,sale.carrier.service.option.user,model_sale_carrier_service_option,base.group_user,1,1,1,1
+access_sale_carrier_service_option_surcharge_line_user,sale.carrier.service.option.surcharge.line.user,model_sale_carrier_service_option_surcharge_line,base.group_user,1,1,1,1
+access_sale_transport_leg_surcharge_line_user,sale.transport.leg.surcharge.line.user,model_sale_transport_leg_surcharge_line,base.group_user,1,1,1,1
+access_sale_package_line_user,sale.package.line.user,model_sale_package_line,base.group_user,1,1,1,1
+access_stock_picking_container_user,stock.picking.container.user,model_stock_picking_container,base.group_user,1,1,1,1
+access_stock_container_report_wizard_user,stock.container.report.wizard.user,model_stock_container_report_wizard,base.group_user,1,1,1,1
+access_stock_container_report_line_user,stock.container.report.line.user,model_stock_container_report_line,base.group_user,1,1,1,1
