@@ -79,6 +79,7 @@ class SaleBulkInvoiceWizard(models.TransientModel):
             "tax_ids": [Command.set(invoice_line.tax_ids.ids)],
             "sale_line_ids": [Command.set(invoice_line.sale_line_ids.ids)],
             "analytic_distribution": invoice_line.analytic_distribution,
+            "invoice_service_type": invoice_line.invoice_service_type,
         }
 
     def _create_bucket_invoice(self, orders):
@@ -138,6 +139,7 @@ class SaleBulkInvoiceWizard(models.TransientModel):
             "price_unit": price_unit,
             "account_id": income_account.id,
             "tax_ids": [Command.set(taxes.ids)],
+            "invoice_service_type": "warehouse",
         }
 
     def _get_pricelist_price(self, order, product, quantity):

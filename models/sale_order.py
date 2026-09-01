@@ -392,6 +392,7 @@ class SaleOrder(models.Model):
                     'price_unit': totals['sell_rate'],
                     'purchase_price': totals['buy_rate'],
                     'transport_surcharge_charge_line': True,
+                    'invoice_service_type': 'transport',
                 }
                 if product.uom_id:
                     line_vals['product_uom'] = product.uom_id.id
@@ -444,6 +445,15 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
     order_type = fields.Selection(related='order_id.order_type')
+    invoice_service_type = fields.Selection(
+        [
+            ('transport', 'Transport'),
+            ('warehouse', 'Warehouse / Picking Service'),
+        ],
+        string='Invoice Service Type',
+        copy=True,
+        index=True,
+    )
     container_charge_line = fields.Boolean(string='Container Charge Line', copy=False)
     goods_delivery_transport_charge_line = fields.Boolean(string='Goods Delivery Transport Charge Line', copy=False)
     transport_surcharge_charge_line = fields.Boolean(string='Transport Surcharge Charge Line', copy=False)
@@ -481,6 +491,23 @@ class SaleOrderLine(models.Model):
     def _refresh_product_taxes_from_product(self):
         for line in self.filtered(lambda sol: not sol.display_type and sol.product_id):
             line.tax_id = [(6, 0, line._get_product_sale_tax_ids(line.product_id, line.order_id))]
+
+    def _prepare_invoice_line(self, **optional_values):
+        self.ensure_one()
+        values = super()._prepare_invoice_line(**optional_values)
+        service_type = self.invoice_service_type
+        if not service_type:
+            if (
+                self.transport_leg_ids
+                or self.goods_delivery_transport_charge_line
+                or self.transport_surcharge_charge_line
+            ):
+                service_type = 'transport'
+            elif self.order_id.order_type in ('goods_in', 'goods_out'):
+                service_type = 'warehouse'
+        if service_type:
+            values['invoice_service_type'] = service_type
+        return values
 
     def _recompute_transport_cost_sell_from_legs(self):
         """Server-side recalculation of cost from transport legs (no computed field)."""
@@ -539,6 +566,7 @@ class SaleOrderLine(models.Model):
         for vals in vals_list:
             # Case A: material-flow lines (non-empty move_ids)
             if vals.get("move_ids"):
+                vals.setdefault('invoice_service_type', 'warehouse')
                 product_id = vals.get("product_id")
                 order_id = vals.get("order_id")
 

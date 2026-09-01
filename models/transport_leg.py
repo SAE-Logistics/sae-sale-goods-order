@@ -186,6 +186,7 @@ class SaleTransportLeg(models.Model):
             'product_uom_qty': 1.0,
             'price_unit': 0.0,
             'goods_delivery_transport_charge_line': True,
+            'invoice_service_type': 'transport',
         }
         if product:
             line_vals.update({
@@ -372,25 +373,48 @@ class SaleTransportLeg(models.Model):
             leg._fetch_service_carrier_options()
         return True
 
-    def _get_rate_location(self):
+    def _get_rate_locations(self):
+        """Return the (collection, delivery) partners for this leg.
+
+        The pickup end is always the collection and the drop-off end always the
+        delivery, whatever the order type: goods_in collects from the customer
+        into the warehouse, goods_out runs the other way, and transport legs
+        carry both explicitly. Each end falls back to the address held on the
+        sale order when the leg itself has none.
+        """
         self.ensure_one()
-        if self.rate_postcode_source == 'from_location':
-            return self.from_location or self.order_id.transport_from_id
-        return self.to_location or self.order_id.transport_to_id
+        collection = self.from_location or self.order_id.transport_from_id
+        delivery = self.to_location or self.order_id.transport_to_id
+        return collection, delivery
 
     def _get_rate_package_totals(self):
         self.ensure_one()
         package_lines = self.picking_id.package_ids or self.order_line_id.package_ids
         if package_lines:
+            # Only pallet package types count towards the pallet quantity; a
+            # Carton or an Item must not be rated as a pallet. Per SAE, every
+            # pallet counts as one full pallet regardless of size, so a Half or
+            # Qtr Pallet is charged as a full one. Weight is still totalled
+            # across every package, as that is the chargeable weight.
+            pallet_lines = package_lines.filtered(lambda line: line.package_type_id.is_pallet)
             return {
                 'weight_kg': sum(package_lines.mapped('weight') or [0.0]),
-                'pallet_qty': sum(package_lines.mapped('quantity') or [0]),
+                'pallet_qty': max(int(sum(pallet_lines.mapped('quantity') or [0])), 0),
+                # Derived from the presence of pallet lines rather than from
+                # pallet_qty, because a pallet line whose quantity was left at
+                # 0 is still a pallet consignment.
+                'is_pallet': bool(pallet_lines),
             }
 
+        # No package details captured. Transport product lines describe goods, not
+        # packaging, so their qty is never a pallet count; fall back to the pallet
+        # count entered on the delivery.
+        pallet_qty = max(int(self.picking_id.pallet_qty or 0), 0)
         transport_product_lines = self.order_id.product_line_ids
         return {
             'weight_kg': sum(transport_product_lines.mapped('weight') or [0.0]),
-            'pallet_qty': sum(transport_product_lines.mapped('qty') or [0]),
+            'pallet_qty': pallet_qty,
+            'is_pallet': bool(pallet_qty),
         }
 
     def _get_carrier_rate_api_url(self):
@@ -414,11 +438,24 @@ class SaleTransportLeg(models.Model):
         if not self.picking_id and not self.order_id:
             raise UserError(_('Please link the transport leg to a sale order or delivery before fetching rates.'))
 
-        location = self._get_rate_location()
-        if not location:
-            raise UserError(_('Please set the %s before fetching rates.') % dict(self._fields['rate_postcode_source'].selection)[self.rate_postcode_source])
-        if not location.zip:
-            raise UserError(_('Please set a postcode on %s before fetching rates.') % location.display_name)
+        # The pricing engine rates on the collection-to-delivery pair, so both
+        # ends are required. Each is reported separately so the user knows which
+        # address to go and fix.
+        collection, delivery = self._get_rate_locations()
+        if not collection:
+            raise UserError(_('Please set the Company (Pickup) before fetching rates.'))
+        if not collection.zip:
+            raise UserError(
+                _('Please set a postcode on the collection address %s before fetching rates.')
+                % collection.display_name
+            )
+        if not delivery:
+            raise UserError(_('Please set the Company (Drop Off) before fetching rates.'))
+        if not delivery.zip:
+            raise UserError(
+                _('Please set a postcode on the delivery address %s before fetching rates.')
+                % delivery.display_name
+            )
 
         totals = self._get_rate_package_totals()
         if totals['weight_kg'] <= 0:
@@ -428,10 +465,15 @@ class SaleTransportLeg(models.Model):
             ))
 
         payload = {
-            'postcode': location.zip,
-            'country_code': location.country_id.code or 'GB',
+            'collection_postcode': collection.zip,
+            'collection_country_code': collection.country_id.code or 'GB',
+            'delivery_postcode': delivery.zip,
+            'delivery_country_code': delivery.country_id.code or 'GB',
             'weight_kg': totals['weight_kg'],
-            'pallet_qty': totals['pallet_qty'] or 1,
+            'pallet_qty': totals['pallet_qty'],
+            # The rate API treats a consignment as palletised when
+            # is_pallet is true OR pallet_qty > 0.
+            'is_pallet': totals['is_pallet'],
             'order_reference': (
                 self.picking_id.name
                 or self.picking_id.origin

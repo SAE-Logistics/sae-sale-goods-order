@@ -201,12 +201,14 @@ class StockPicking(models.Model):
                     'product_uom_qty': qty,
                     'product_uom': product.uom_id.id,
                     'price_unit': product.lst_price,
+                    'invoice_service_type': 'warehouse',
                 })
             else:
                 line = line[0]
                 line.write({
                     'name': product.get_product_multiline_description_sale() or product.display_name,
                     'product_uom_qty': qty,
+                    'invoice_service_type': 'warehouse',
                 })
 
             if hasattr(line, 'qty_delivered_method') and line.qty_delivered_method != 'manual':
@@ -288,6 +290,7 @@ class StockPicking(models.Model):
                 'price_unit': product.lst_price,
                 'package_type_id': package_type.id,
                 'container_charge_line': True,
+                'invoice_service_type': 'warehouse',
             }
             if not line:
                 line = self.env['sale.order.line'].create(values)

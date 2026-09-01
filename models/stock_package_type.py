@@ -5,10 +5,28 @@ class StockPackageType(models.Model):
     _inherit = 'stock.package.type'
 
     product_id = fields.Many2one('product.product', string='Product')
+    # Pallet package types are rated differently by the carriers, so the rate
+    # API needs to know whether a consignment is palletised. Every pallet type
+    # in use carries "Pallet" in its name and no other type does, so the name
+    # is a reliable signal. Stored + readonly=False keeps it auto-detected but
+    # overridable if a future type is named ambiguously.
+    is_pallet = fields.Boolean(
+        string='Is Pallet',
+        compute='_compute_is_pallet',
+        store=True,
+        readonly=False,
+        help='Detected from the package type name. Sent to the carrier rate API '
+             'and used to work out the pallet quantity.',
+    )
     container_move_count = fields.Integer(
         string='Container Moves',
         compute='_compute_container_move_count',
     )
+
+    @api.depends('name')
+    def _compute_is_pallet(self):
+        for record in self:
+            record.is_pallet = 'pallet' in (record.name or '').strip().lower()
 
     def _compute_container_move_count(self):
         grouped_data = self.env['stock.picking.container'].read_group(

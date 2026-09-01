@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="paperformat_goods_invoice" model="report.paperformat">
-        <field name="name">Goods Invoice</field>
+        <field name="name">Warehouse Invoice</field>
         <field name="default" eval="False"/>
         <field name="format">A4</field>
-        <field name="orientation">Landscape</field>
+        <field name="orientation">Portrait</field>
         <field name="margin_top">6</field>
         <field name="margin_bottom">6</field>
         <field name="margin_left">6</field>
@@ -15,7 +15,7 @@
     </record>
 
     <record id="action_report_goods_invoice" model="ir.actions.report">
-        <field name="name">Goods Invoice</field>
+        <field name="name">Warehouse Invoice</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">sale_goods_order.report_goods_invoice_document</field>
@@ -23,6 +23,6 @@
         <field name="paperformat_id" ref="sale_goods_order.paperformat_goods_invoice"/>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
-        <field name="print_report_name">'Goods Invoice - %s' % (object.name or object.ref or '')</field>
+        <field name="print_report_name">'Warehouse Invoice - %s' % (object.name or object.ref or '')</field>
     </record>
 </odoo>

@@ -3,6 +3,20 @@ from datetime import timedelta
 from odoo import fields, models
 
 
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    invoice_service_type = fields.Selection(
+        [
+            ("transport", "Transport"),
+            ("warehouse", "Warehouse / Picking Service"),
+        ],
+        string="Invoice Service Type",
+        copy=True,
+        index=True,
+    )
+
+
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -11,7 +25,12 @@ class AccountMove(models.Model):
 
     def _get_report_product_invoice_lines(self):
         self.ensure_one()
-        return self.invoice_line_ids.filtered(lambda line: line.display_type == "product" or not line.display_type)
+        return self.invoice_line_ids.filtered(
+            lambda line: (
+                (line.display_type == "product" or not line.display_type)
+                and not self.currency_id.is_zero(line.price_subtotal)
+            )
+        )
 
     def _get_sale_orders_from_origin(self, order_types):
         self.ensure_one()
@@ -33,13 +52,31 @@ class AccountMove(models.Model):
     def _get_transport_sale_orders_from_origin(self):
         return self._get_sale_orders_from_origin(["transport"])
 
+    def _get_transport_invoice_lines(self):
+        """Return only invoiced lines backed by transport sale lines.
+
+        A mixed invoice can contain warehouse services and transport charges.
+        The transport report must therefore be scoped through the preserved
+        invoice-line/sale-line relationship, not through ``invoice_origin``.
+        """
+        self.ensure_one()
+        invoice_lines = self._get_report_product_invoice_lines()
+        directly_linked_sale_lines = invoice_lines.sale_line_ids.filtered("transport_leg_ids")
+        transport_orders = directly_linked_sale_lines.order_id
+        return invoice_lines.filtered(
+            lambda invoice_line: any(
+                sale_line.transport_leg_ids
+                or (
+                    sale_line.transport_surcharge_charge_line
+                    and sale_line.order_id in transport_orders
+                )
+                for sale_line in invoice_line.sale_line_ids
+            )
+        )
+
     def _get_transport_sale_orders(self):
         self.ensure_one()
-        sale_orders = self.invoice_line_ids.sale_line_ids.order_id.filtered(
-            lambda order: order.order_type == "transport"
-        )
-        if not sale_orders:
-            sale_orders = self._get_transport_sale_orders_from_origin()
+        sale_orders = self._get_transport_invoice_lines().sale_line_ids.order_id
         return sale_orders.sorted(key=lambda order: (order.date_order or fields.Datetime.now(), order.id))
 
     def _get_transport_invoice_customer_order(self):
@@ -52,51 +89,75 @@ class AccountMove(models.Model):
     def _get_transport_invoice_rows(self):
         self.ensure_one()
         rows = []
-        fallback_sale_orders = self._get_transport_sale_orders_from_origin()
-
-        invoice_lines = self._get_report_product_invoice_lines()
-        for invoice_line in invoice_lines:
-            sale_lines = invoice_line.sale_line_ids.filtered(
-                lambda line: line.order_id.order_type == "transport"
-            )
-            if not sale_lines:
-                if not fallback_sale_orders:
-                    rows.append(self._prepare_transport_row(invoice_line))
-                continue
-
+        seen_sale_line_ids = set()
+        for invoice_line in self._get_transport_invoice_lines():
+            sale_lines = invoice_line.sale_line_ids.filtered("transport_leg_ids")
             for sale_line in sale_lines:
-                legs = sale_line.transport_leg_ids.sorted(key=lambda leg: (leg.sequence, leg.id))
-                if not legs:
-                    rows.append(self._prepare_transport_row(invoice_line, sale_line=sale_line))
+                if sale_line.id in seen_sale_line_ids:
                     continue
-
+                seen_sale_line_ids.add(sale_line.id)
+                legs = sale_line.transport_leg_ids.sorted(key=lambda leg: (leg.sequence, leg.id))
+                row = self._prepare_transport_row(
+                    invoice_line=invoice_line,
+                    sale_line=sale_line,
+                    legs=legs,
+                )
+                fuel_charge = 0.0
+                surcharge_groups = {}
+                surcharge_order = []
                 for leg in legs:
+                    if leg.surcharge_line_ids:
+                        for surcharge in leg.surcharge_line_ids.sorted(key=lambda line: line.id):
+                            if "fuel" in (surcharge.name or "").lower():
+                                fuel_charge += surcharge.sell_rate
+                            else:
+                                key = (
+                                    surcharge.surcharge_product_id.id
+                                    or (surcharge.name or "").strip().lower()
+                                )
+                                if key not in surcharge_groups:
+                                    surcharge_groups[key] = {
+                                        "name": surcharge.name or surcharge.surcharge_product_id.display_name,
+                                        "value": 0.0,
+                                    }
+                                    surcharge_order.append(key)
+                                surcharge_groups[key]["value"] += surcharge.sell_rate
+                    else:
+                        # Legacy legs store the combined surcharge in F/S only.
+                        fuel_charge += leg.fs_sell_rate
+                row["fuel_charge"] = fuel_charge
+                rows.append(row)
+                for key in surcharge_order:
+                    surcharge_group = surcharge_groups[key]
                     rows.append(
-                        self._prepare_transport_row(
-                            invoice_line,
-                            sale_line=sale_line,
-                            leg=leg,
+                        self._prepare_transport_surcharge_row(
+                            legs[0],
+                            surcharge_group["name"],
+                            surcharge_group["value"],
                         )
                     )
-        if rows:
-            return rows
-
-        for sale_order in fallback_sale_orders:
-            for sale_line in sale_order.order_line.filtered(lambda line: not line.display_type):
-                legs = sale_line.transport_leg_ids.sorted(key=lambda leg: (leg.sequence, leg.id))
-                if not legs:
-                    rows.append(self._prepare_transport_row(sale_line=sale_line))
-                    continue
-                for leg in legs:
-                    rows.append(self._prepare_transport_row(sale_line=sale_line, leg=leg))
         return rows
 
-    def _prepare_transport_row(self, invoice_line=False, sale_line=False, leg=False):
+    def _format_transport_location(self, partner):
+        if not partner:
+            return ""
+        return ", ".join(filter(None, [partner.city, partner.zip]))
+
+    def _prepare_transport_row(self, invoice_line=False, sale_line=False, legs=False):
         order = sale_line.order_id if sale_line else False
+        legs = legs or self.env["sale.transport.leg"]
+        first_leg = legs[0] if legs else False
+        last_leg = legs[-1] if legs else False
         partner_from = (
-            leg.from_location if leg and leg.from_location else order.transport_from_id if order else False
+            first_leg.from_location
+            if first_leg and first_leg.from_location
+            else order.transport_from_id if order else False
         )
-        partner_to = leg.to_location if leg and leg.to_location else order.transport_to_id if order else False
+        partner_to = (
+            last_leg.to_location
+            if last_leg and last_leg.to_location
+            else order.transport_to_id if order else False
+        )
         invoice_description = ""
         if invoice_line:
             invoice_description = (
@@ -104,8 +165,14 @@ class AccountMove(models.Model):
             )
         description = ""
         if sale_line:
+            package_descriptions = list(
+                dict.fromkeys(
+                    filter(None, sale_line.package_ids.mapped("package_type_id.name"))
+                )
+            )
             description = (
-                sale_line.package_type_id.name
+                ", ".join(package_descriptions)
+                or sale_line.package_type_id.name
                 or invoice_description
                 or sale_line.name
             )
@@ -115,29 +182,135 @@ class AccountMove(models.Model):
         if order:
             customer_ref = order.client_order_ref or order.cost_centre_id.display_name or order.partner_id.ref or ""
         row_date = (
-            leg.from_date
-            if leg and leg.from_date
+            first_leg.from_date
+            if first_leg and first_leg.from_date
             else order.date_order.date() if order and order.date_order else self.invoice_date
         )
+        references = list(dict.fromkeys(filter(None, legs.mapped("reference"))))
+        services = list(dict.fromkeys(filter(None, legs.mapped("service_id.display_name"))))
 
         return {
+            "row_type": "consignment",
             "date": row_date,
             "client_ref": customer_ref,
-            "job_no": leg.reference if leg and leg.reference else order.name if order else self.invoice_origin or self.name,
+            "job_no": ", ".join(references) if references else order.name if order else self.invoice_origin or self.name,
             "service": (
-                leg.service_id.display_name
-                if leg and leg.service_id
+                ", ".join(services)
+                if services
                 else invoice_line.product_id.display_name if invoice_line and invoice_line.product_id
                 else sale_line.product_id.display_name if sale_line and sale_line.product_id
                 else ""
             ),
             "description": description,
             "weight": sale_line.total_weight if sale_line else 0.0,
-            "from_postcode": partner_from.zip if partner_from else "",
-            "to_postcode": partner_to.zip if partner_to else "",
+            "from_postcode": self._format_transport_location(partner_from),
+            "to_postcode": self._format_transport_location(partner_to),
             "consignee": partner_to.name if partner_to else invoice_line.partner_id.display_name if invoice_line else self.partner_id.display_name,
-            "value": leg.sell_rate if leg else invoice_line.price_subtotal if invoice_line else sale_line.price_subtotal if sale_line else 0.0,
-            "fuel_charge": leg.fs_sell_rate if leg else sale_line.fs_unit_price if sale_line else 0.0,
+            "value": sum((leg.base_sell_rate or leg.sell_rate or 0.0) for leg in legs),
+            "fuel_charge": 0.0,
+        }
+
+    def _prepare_transport_surcharge_row(self, first_leg, surcharge_name, surcharge_value):
+        return {
+            "row_type": "surcharge",
+            "date": first_leg.from_date or self.invoice_date,
+            "client_ref": "Additional charges:",
+            "job_no": "",
+            "service": surcharge_name,
+            "description": "",
+            "weight": 0.0,
+            "from_postcode": "",
+            "to_postcode": "",
+            "consignee": "",
+            "value": surcharge_value,
+            "fuel_charge": 0.0,
+        }
+
+    def _get_transport_invoice_report_data(self):
+        self.ensure_one()
+        invoice_lines = self._get_transport_invoice_lines()
+        rows = self._get_transport_invoice_rows()
+        consignment_rows = [row for row in rows if row["row_type"] == "consignment"]
+        taxes = invoice_lines.tax_ids
+        untaxed = sum(invoice_lines.mapped("price_subtotal"))
+        total = sum(invoice_lines.mapped("price_total"))
+        return {
+            "rows": rows,
+            "consignment_count": len(consignment_rows),
+            "summary_value": sum(row["value"] for row in rows),
+            "summary_fuel": sum(row["fuel_charge"] for row in consignment_rows),
+            "untaxed": self.currency_id.round(untaxed),
+            "tax": self.currency_id.round(total - untaxed),
+            "total": self.currency_id.round(total),
+            "tax_label": ", ".join(taxes.mapped("name")),
+        }
+
+    def _get_warehouse_invoice_lines(self):
+        """Return the warehouse/picking portion of a possibly mixed invoice."""
+        self.ensure_one()
+        invoice_lines = self._get_report_product_invoice_lines()
+        transport_lines = self._get_transport_invoice_lines()
+        goods_sale_orders = invoice_lines.sale_line_ids.order_id.filtered(
+            lambda order: order.order_type in ("goods_in", "goods_out")
+        )
+
+        return (invoice_lines - transport_lines).filtered(
+            lambda invoice_line: (
+                invoice_line.invoice_service_type == "warehouse"
+                or any(
+                    sale_line.invoice_service_type == "warehouse"
+                    or sale_line.order_id.order_type in ("goods_in", "goods_out")
+                    for sale_line in invoice_line.sale_line_ids
+                )
+                # Legacy storage/rental lines were created directly on goods
+                # invoices and consequently have no sale_line_ids.
+                or (not invoice_line.sale_line_ids and bool(goods_sale_orders))
+            )
+        ).sorted(key=lambda line: (line.sequence, line.id))
+
+    def _get_warehouse_invoice_report_data(self):
+        self.ensure_one()
+        invoice_lines = self._get_warehouse_invoice_lines()
+        grouped_rows = []
+        rows_by_key = {}
+        for invoice_line in invoice_lines:
+            key = (
+                invoice_line.product_id.id or ("line", invoice_line.id),
+                invoice_line.product_uom_id.id,
+                tuple(sorted(invoice_line.tax_ids.ids)),
+            )
+            row = rows_by_key.get(key)
+            if not row:
+                row = {
+                    "description": invoice_line.name or invoice_line.product_id.display_name,
+                    "quantity": 0.0,
+                    "subtotal": 0.0,
+                    "total": 0.0,
+                    "tax_label": ", ".join(invoice_line.tax_ids.mapped("name")),
+                }
+                rows_by_key[key] = row
+                grouped_rows.append(row)
+            row["quantity"] += invoice_line.quantity
+            row["subtotal"] += invoice_line.price_subtotal
+            row["total"] += invoice_line.price_total
+
+        for row in grouped_rows:
+            row["unit_price"] = (
+                row["subtotal"] / row["quantity"]
+                if row["quantity"]
+                else 0.0
+            )
+            row["subtotal"] = self.currency_id.round(row["subtotal"])
+            row["total"] = self.currency_id.round(row["total"])
+
+        untaxed = sum(invoice_lines.mapped("price_subtotal"))
+        total = sum(invoice_lines.mapped("price_total"))
+        return {
+            "lines": invoice_lines,
+            "rows": grouped_rows,
+            "untaxed": self.currency_id.round(untaxed),
+            "tax": self.currency_id.round(total - untaxed),
+            "total": self.currency_id.round(total),
         }
 
     def _get_goods_sale_orders_from_origin(self):

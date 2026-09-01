@@ -4,7 +4,8 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="company" t-value="o.company_id.sudo()"/>
-                <t t-set="rows" t-value="o._get_transport_invoice_rows()"/>
+                <t t-set="data" t-value="o._get_transport_invoice_report_data()"/>
+                <t t-set="rows" t-value="data.get('rows')"/>
                 <t t-set="customer_order" t-value="o._get_transport_invoice_customer_order()"/>
 
                 <t t-call="web.basic_layout">
@@ -12,165 +13,199 @@
                         <style>
                             .transport-invoice-page {
                                 font-family: Arial, sans-serif;
-                                color: #3d4761;
-                                font-size: 11px;
-                                margin: 0;
+                                color: #4e5d83;
+                                font-size: 10px;
                                 padding: 0;
                             }
-                            .transport-invoice-header {
+                            .transport-header,
+                            .transport-title-block,
+                            .transport-table,
+                            .transport-bottom {
                                 width: 100%;
-                                margin-bottom: 10px;
+                                border-collapse: collapse;
                             }
-                            .transport-invoice-header td {
+                            .transport-header td,
+                            .transport-title-block td,
+                            .transport-bottom td {
                                 vertical-align: top;
                                 padding: 0;
                             }
-                            .transport-company-logo {
-                                max-height: 56px;
-                                max-width: 200px;
+                            .transport-logo {
+                                max-height: 70px;
+                                max-width: 230px;
                             }
-                            .transport-company-block {
+                            .company-address {
                                 text-align: right;
-                                line-height: 1.2;
-                                color: #7a88a6;
+                                color: #63749b;
                                 font-size: 11px;
+                                line-height: 1.3;
                             }
-                            .transport-company-block .company-name {
-                                color: #6e8d38;
-                                font-weight: 700;
-                                font-size: 17px;
+                            .company-address .website {
+                                color: #79a64b;
+                                font-size: 14px;
+                                font-weight: bold;
                             }
-                            .transport-title-row {
-                                width: 100%;
-                                margin-bottom: 8px;
+                            .transport-title-block {
+                                margin-top: 14px;
+                                margin-bottom: 24px;
+                            }
+                            .customer-address {
+                                color: #54658d;
+                                font-size: 11px;
+                                line-height: 1.16;
                             }
                             .transport-title {
-                                text-align: right;
+                                color: #4d5f8b;
                                 font-size: 22px;
-                                line-height: 1.1;
-                                font-weight: 700;
-                                color: #54658d;
-                                text-transform: uppercase;
-                            }
-                            .transport-invoice-meta {
-                                width: 270px;
-                                margin-left: auto;
-                                font-size: 11px;
-                                color: #4f5b77;
-                            }
-                            .transport-invoice-meta td {
-                                padding: 0;
-                            }
-                            .transport-invoice-meta .label {
-                                font-weight: 700;
+                                font-weight: bold;
                                 text-align: right;
-                                width: 48%;
-                                padding-right: 12px;
+                                margin-bottom: 10px;
                             }
-                            .transport-invoice-meta .value {
-                                font-weight: 700;
-                            }
-                            .transport-address-block {
-                                margin-bottom: 8px;
-                                line-height: 1.15;
-                                color: #6a7592;
+                            .invoice-meta {
+                                width: 290px;
+                                margin-left: auto;
+                                border-collapse: collapse;
                                 font-size: 11px;
+                            }
+                            .invoice-meta td {
+                                padding: 2px 0;
+                            }
+                            .invoice-meta .label {
+                                width: 48%;
+                                padding-right: 14px;
+                                text-align: right;
+                                font-weight: bold;
+                            }
+                            .invoice-meta .value {
+                                color: #363d4d;
                             }
                             .transport-table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                font-size: 9px;
                                 table-layout: fixed;
+                                font-size: 8.5px;
                             }
-                            .transport-table thead th {
-                                background: #7384b0;
-                                color: #fff;
-                                border: 1px solid #d9deeb;
-                                padding: 4px 4px;
-                                font-weight: 700;
+                            .transport-table th {
+                                padding: 4px 3px;
+                                border: 1px solid #cbd2e3;
+                                background: #aeb8d1;
+                                color: #445579;
+                                font-weight: normal;
                                 text-align: left;
                                 white-space: nowrap;
                             }
-                            .transport-table tbody td {
-                                border: 1px solid #d9deeb;
-                                padding: 3px 4px;
-                                color: #4d5875;
+                            .transport-table td {
+                                padding: 4px 3px;
+                                border-left: 1px solid #d6dbea;
+                                border-right: 1px solid #d6dbea;
+                                border-bottom: 1px solid #d6dbea;
                                 vertical-align: top;
                             }
-                            .transport-table .text-right {
+                            .transport-table .surcharge-row td {
+                                background: #dfe3ef;
+                                color: #40547c;
+                            }
+                            .transport-table .summary-row td {
+                                border-top: 2px solid #919dbd;
+                                background: #f4f5f8;
+                                font-size: 11px;
+                                font-weight: bold;
+                            }
+                            .transport-table .summary-row .summary-label {
+                                text-align: right;
+                                color: #536891;
+                                font-size: 13px;
+                            }
+                            .text-right { text-align: right !important; }
+                            .nowrap { white-space: nowrap; }
+                            .transport-bottom {
+                                margin-top: 26px;
+                                page-break-inside: avoid;
+                            }
+                            .tax-summary {
+                                width: 280px;
+                                border-collapse: collapse;
+                                color: #5a6b91;
+                                font-size: 9px;
+                            }
+                            .tax-summary th,
+                            .tax-summary td {
+                                padding: 2px 5px;
                                 text-align: right;
                             }
-                            .transport-table .nowrap {
+                            .invoice-totals {
+                                width: 310px;
+                                margin-left: auto;
+                                border-collapse: collapse;
+                                color: #50628b;
+                                font-size: 12px;
+                            }
+                            .invoice-totals td {
+                                padding: 3px 5px;
+                            }
+                            .invoice-totals .amount {
+                                text-align: right;
+                                color: #39445e;
                                 white-space: nowrap;
                             }
-                            .transport-table .amount-col {
-                                white-space: nowrap;
-                                font-size: 8.5px;
+                            .invoice-totals .grand-total td {
+                                padding-top: 6px;
+                                font-size: 14px;
+                                font-weight: bold;
                             }
                             .transport-footer {
-                                margin-top: 10px;
-                                color: #68748f;
-                                font-size: 10px;
-                                line-height: 1.35;
+                                margin-top: 28px;
+                                border-top: 1px solid #d9deea;
+                                padding-top: 6px;
+                                color: #4e5872;
+                                font-size: 8.5px;
+                                line-height: 1.3;
                             }
-                            .transport-footer .footer-right {
-                                text-align: right;
-                                color: #97a04d;
+                            .transport-footer .page-number {
+                                float: right;
+                                color: #8eb979;
                             }
                         </style>
 
-                        <table class="transport-invoice-header">
+                        <table class="transport-header">
                             <tr>
                                 <td style="width: 48%;">
-                                    <img
-                                        t-if="company.logo"
-                                        t-att-src="image_data_uri(company.logo)"
-                                        class="transport-company-logo"
-                                        alt="Company Logo"
-                                    />
+                                    <img t-if="company.logo"
+                                         t-att-src="image_data_uri(company.logo)"
+                                         class="transport-logo"
+                                         alt="Company Logo"/>
                                 </td>
-                                <td style="width: 52%;" class="transport-company-block">
-                                    <div t-if="company.street"><span t-esc="company.street"/></div>
+                                <td style="width: 52%;" class="company-address">
+                                    <div><span t-esc="company.street or ''"/></div>
                                     <div t-if="company.street2"><span t-esc="company.street2"/></div>
                                     <div>
-                                        <span t-if="company.city" t-esc="company.city"/>
+                                        <span t-esc="company.city or ''"/>
                                         <t t-if="company.city and company.state_id">, </t>
-                                        <span t-if="company.state_id" t-esc="company.state_id.name"/>
-                                        <t t-if="(company.city or company.state_id) and company.zip"> </t>
-                                        <span t-if="company.zip" t-esc="company.zip"/>
+                                        <span t-esc="company.state_id.name if company.state_id else ''"/>
+                                        <t t-if="company.zip">, </t><span t-esc="company.zip or ''"/>
                                     </div>
-                                    <div t-if="company.country_id"><span t-esc="company.country_id.name"/></div>
-                                    <div t-if="company.phone">T: <span t-esc="company.phone"/></div>
-                                    <div t-if="company.email">E: <span t-esc="company.email"/></div>
-                                    <div class="company-name" t-if="company.website">
+                                    <div t-if="company.phone"><strong>T:</strong> <span t-esc="company.phone"/></div>
+                                    <div t-if="company.email"><strong>E:</strong> <span t-esc="company.email"/></div>
+                                    <div class="website" t-if="company.website">
                                         <span t-esc="company.website.replace('http://', '').replace('https://', '')"/>
                                     </div>
                                 </td>
                             </tr>
                         </table>
 
-                        <table class="transport-title-row">
+                        <table class="transport-title-block">
                             <tr>
-                                <td style="width: 45%;">
-                                    <div class="transport-address-block">
-                                        <div t-if="o.partner_id.name"><span t-esc="o.partner_id.name"/></div>
+                                <td style="width: 45%; padding-top: 48px;">
+                                    <div class="customer-address">
+                                        <div t-if="o.partner_id.name"><strong t-esc="o.partner_id.name"/></div>
                                         <div t-if="o.partner_id.street"><span t-esc="o.partner_id.street"/></div>
                                         <div t-if="o.partner_id.street2"><span t-esc="o.partner_id.street2"/></div>
-                                        <div>
-                                            <span t-if="o.partner_id.city" t-esc="o.partner_id.city"/>
-                                            <t t-if="o.partner_id.city and o.partner_id.state_id">, </t>
-                                            <span t-if="o.partner_id.state_id" t-esc="o.partner_id.state_id.name"/>
-                                        </div>
-                                        <div>
-                                            <span t-if="o.partner_id.zip" t-esc="o.partner_id.zip"/>
-                                            <t t-if="o.partner_id.zip and o.partner_id.country_id">, </t>
-                                            <span t-if="o.partner_id.country_id" t-esc="o.partner_id.country_id.name"/>
-                                        </div>
+                                        <div t-if="o.partner_id.city"><span t-esc="o.partner_id.city"/></div>
+                                        <div t-if="o.partner_id.state_id"><span t-esc="o.partner_id.state_id.name"/></div>
+                                        <div t-if="o.partner_id.zip"><span t-esc="o.partner_id.zip"/></div>
                                     </div>
                                 </td>
                                 <td style="width: 55%;">
-                                    <div class="transport-title">Transport Invoice</div>
-                                    <table class="transport-invoice-meta">
+                                    <div class="transport-title">UK Transport - INVOICE</div>
+                                    <table class="invoice-meta">
                                         <tr>
                                             <td class="label">Number:</td>
                                             <td class="value"><span t-esc="o.name"/></td>
@@ -181,13 +216,11 @@
                                         </tr>
                                         <tr>
                                             <td class="label">Account Ref:</td>
-                                            <td class="value">
-                                                <span t-esc="o.commercial_partner_id.ref or o.partner_id.ref or ''"/>
-                                            </td>
+                                            <td class="value"><span t-esc="o.commercial_partner_id.ref or o.partner_id.ref or ''"/></td>
                                         </tr>
                                         <tr>
                                             <td class="label">Customer Order:</td>
-                                            <td class="value"><span t-esc="customer_order or o.invoice_origin or ''"/></td>
+                                            <td class="value"><span t-esc="customer_order or o.ref or o.invoice_origin or ''"/></td>
                                         </tr>
                                     </table>
                                 </td>
@@ -197,62 +230,121 @@
                         <table class="transport-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 8%;">Date</th>
-                                    <th style="width: 11%;">Client Ref</th>
-                                    <th style="width: 10%;">Job No</th>
-                                    <th style="width: 13%;">Service</th>
-                                    <th style="width: 15%;">Description</th>
-                                    <th class="text-right" style="width: 6%;">Weight</th>
-                                    <th style="width: 7%;">From</th>
-                                    <th style="width: 7%;">To</th>
+                                    <th style="width: 7%;">Date</th>
+                                    <th style="width: 9%;">Client Ref</th>
+                                    <th style="width: 9%;">Job No</th>
+                                    <th style="width: 10%;">Service</th>
+                                    <th style="width: 12%;">Description</th>
+                                    <th class="text-right" style="width: 5%;">Weight</th>
+                                    <th style="width: 10%;">From</th>
+                                    <th style="width: 10%;">To</th>
                                     <th style="width: 12%;">Consignee</th>
-                                    <th class="text-right nowrap" style="width: 7%;">Value</th>
-                                    <th class="text-right nowrap" style="width: 8%;">Fuel Chg</th>
+                                    <th class="text-right" style="width: 8%;">Value</th>
+                                    <th class="text-right" style="width: 8%;">Fuel Chg</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="rows" t-as="row">
-                                    <td class="nowrap"><span t-esc="row.get('date') or ''"/></td>
-                                    <td><span t-esc="row.get('client_ref')"/></td>
-                                    <td class="nowrap"><span t-esc="row.get('job_no')"/></td>
-                                    <td><span t-esc="row.get('service')"/></td>
-                                    <td><span t-esc="row.get('description')"/></td>
-                                    <td class="text-right nowrap">
-                                        <span t-esc="'%.2f' % row.get('weight', 0.0) if row.get('weight') else ''"/>
-                                    </td>
-                                    <td class="nowrap"><span t-esc="row.get('from_postcode')"/></td>
-                                    <td class="nowrap"><span t-esc="row.get('to_postcode')"/></td>
-                                    <td><span t-esc="row.get('consignee')"/></td>
-                                    <td class="text-right amount-col">
-                                        <span t-esc="'%s %.2f' % (o.currency_id.symbol or '', row.get('value', 0.0))"/>
-                                    </td>
-                                    <td class="text-right amount-col">
-                                        <span t-esc="'%s %.2f' % (o.currency_id.symbol or '', row.get('fuel_charge', 0.0))"/>
-                                    </td>
-                                </tr>
+                                <t t-foreach="rows" t-as="row">
+                                    <tr t-if="row.get('row_type') == 'surcharge'" class="surcharge-row">
+                                        <td class="nowrap"><span t-esc="row.get('date').strftime('%d-%b-%y') if row.get('date') else ''"/></td>
+                                        <td colspan="8">
+                                            <strong>Additional Charges:</strong>
+                                            <span t-esc="row.get('service') or ''"/>
+                                        </td>
+                                        <td class="text-right nowrap">
+                                            <span t-out="row.get('value', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr t-else="">
+                                        <td class="nowrap"><span t-esc="row.get('date').strftime('%d-%b-%y') if row.get('date') else ''"/></td>
+                                        <td><span t-esc="row.get('client_ref') or ''"/></td>
+                                        <td class="nowrap"><span t-esc="row.get('job_no') or ''"/></td>
+                                        <td><span t-esc="row.get('service') or ''"/></td>
+                                        <td><span t-esc="row.get('description') or ''"/></td>
+                                        <td class="text-right nowrap">
+                                            <span t-if="row.get('weight')" t-esc="'%g Kg' % row.get('weight')"/>
+                                        </td>
+                                        <td><span t-esc="row.get('from_postcode') or ''"/></td>
+                                        <td><span t-esc="row.get('to_postcode') or ''"/></td>
+                                        <td><span t-esc="row.get('consignee') or ''"/></td>
+                                        <td class="text-right nowrap">
+                                            <span t-out="row.get('value', 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td class="text-right nowrap">
+                                            <span t-if="row.get('fuel_charge')" t-out="row.get('fuel_charge')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
                                 <tr t-if="not rows">
-                                    <td colspan="11">No transport lines linked to this invoice.</td>
+                                    <td colspan="11">No transport legs are linked to the invoiced lines.</td>
+                                </tr>
+                                <tr class="summary-row" t-if="rows">
+                                    <td colspan="5">
+                                        <span t-esc="data.get('consignment_count')"/>
+                                        <span> Consignment</span><span t-if="data.get('consignment_count') != 1">s</span>
+                                    </td>
+                                    <td colspan="4" class="summary-label">Summary Total:</td>
+                                    <td class="text-right nowrap">
+                                        <span t-out="data.get('summary_value')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                    <td class="text-right nowrap">
+                                        <span t-out="data.get('summary_fuel')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
 
+                        <table class="transport-bottom" t-if="rows">
+                            <tr>
+                                <td style="width: 55%; padding-top: 20px;">
+                                    <table class="tax-summary">
+                                        <thead>
+                                            <tr><th>Tax Summary</th><th>Goods</th><th>Tax</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span t-esc="data.get('tax_label') or 'VAT'"/></td>
+                                                <td><span t-out="data.get('untaxed')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                                <td><span t-out="data.get('tax')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td style="width: 45%;">
+                                    <table class="invoice-totals">
+                                        <tr>
+                                            <td>Net Amount</td>
+                                            <td class="amount"><span t-out="data.get('untaxed')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>VAT<t t-if="data.get('tax_label')"> @ <span t-esc="data.get('tax_label')"/></t></td>
+                                            <td class="amount"><span t-out="data.get('tax')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                        </tr>
+                                        <tr class="grand-total">
+                                            <td>Total</td>
+                                            <td class="amount"><span t-out="data.get('total')" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
                         <div class="transport-footer">
+                            <div>
+                                <strong t-esc="company.name"/>
+                                <t t-if="company.company_registry"> | Company Reg no: <span t-esc="company.company_registry"/></t>
+                                <t t-if="company.vat"> | VAT: <span t-esc="company.vat"/></t>
+                            </div>
                             <div t-if="company.partner_id.bank_ids">
                                 <strong>Payment details:</strong>
                                 <span t-esc="company.partner_id.bank_ids[0].bank_id.name or ''"/>
-                                <t t-if="company.partner_id.bank_ids[0].acc_number">
-                                    <span> | Account: </span>
-                                    <span t-esc="company.partner_id.bank_ids[0].acc_number"/>
-                                </t>
+                                <t t-if="company.partner_id.bank_ids[0].acc_number"> | Account no: <span t-esc="company.partner_id.bank_ids[0].acc_number"/></t>
                             </div>
                             <div t-if="o.invoice_payment_term_id">
-                                <strong>Terms:</strong>
-                                <span t-esc="o.invoice_payment_term_id.name"/>
+                                <strong>Payment Terms:</strong> <span t-esc="o.invoice_payment_term_id.name"/>
                             </div>
                             <div t-if="company.report_footer" t-out="company.report_footer"/>
-                            <div class="footer-right">
-                                (Page <span class="page"/>)
-                            </div>
                         </div>
                     </div>
                 </t>
